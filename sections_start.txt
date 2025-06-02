@@ -1,0 +1,7 @@
+148:      <section className="pt-32 pb-20 relative hero-gradient dark:bg-gray-900 dark:bg-opacity-95">
+306:      <section className="py-20" id="features">
+349:      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="demo">
+441:      <section className="py-20" id="pricing">
+457:      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="contact">
+634:      <section className="py-20" id="pricing">
+650:      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="contact">

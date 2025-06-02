@@ -1,0 +1,77 @@
+import { QueryExplanation } from '@/lib/types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './tooltip';
+
+export function QueryWithTooltips({
+  query,
+  queryExplanations,
+}: {
+  query: string;
+  queryExplanations: QueryExplanation[];
+}) {
+  const segments = segmentQuery(query, queryExplanations);
+
+  return (
+    <div className="font-mono bg-muted rounded-lg overflow-x-auto">
+      {segments.map((segment, index) => (
+        <span key={index}>
+          {segment.explanation ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block hover:bg-primary/20 transition-colors duration-200 ease-in-out rounded-sm px-1 cursor-help">
+                    {segment.text}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  avoidCollisions={true}
+                  className="max-w-xl font-sans"
+                >
+                  <p className="whitespace-normal">{segment.explanation}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            segment.text
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function segmentQuery(
+  query: string,
+  explanations: QueryExplanation[]
+): Array<{ text: string; explanation?: string }> {
+  const segments: Array<{ text: string; explanation?: string }> = [];
+  let lastIndex = 0;
+
+  // نقوم بترتيب تفسيرات الاستعلام حسب موقع ظهور القسم في الاستعلام
+  const sortedExplanations = explanations
+    .map((exp) => ({ ...exp, index: query.indexOf(exp.section) }))
+    .filter((exp) => exp.index !== -1)
+    .sort((a, b) => a.index - b.index);
+
+  sortedExplanations.forEach((exp) => {
+    if (exp.index > lastIndex) {
+      // إضافة أي نص قبل التفسير الحالي كجزء بدون تفسير
+      segments.push({ text: query.slice(lastIndex, exp.index) });
+    }
+    // إضافة الجزء الذي يحتوي على تفسير
+    segments.push({ text: exp.section, explanation: exp.explanation });
+    lastIndex = exp.index + exp.section.length;
+  });
+
+  // إضافة أي نص متبقي بعد آخر تفسير
+  if (lastIndex < query.length) {
+    segments.push({ text: query.slice(lastIndex) });
+  }
+
+  return segments;
+}

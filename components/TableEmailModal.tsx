@@ -1,0 +1,335 @@
+//components/TableEmailModal.tsx
+'use client';
+
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { X, Mail, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+
+interface EmailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  results: any[];
+  question: string;
+  selectedModel: string;
+  chartElementId?: string;
+  tableName?: string;
+}
+
+const TableEmailModal: React.FC<EmailModalProps> = ({
+  isOpen,
+  onClose,
+  results,
+  question,
+  selectedModel,
+  chartElementId = 'table-data-container',
+  tableName,
+}) => {
+  const [toEmails, setToEmails] = useState<string[]>([]);
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
+  const [newToEmail, setNewToEmail] = useState('');
+  const [newCcEmail, setNewCcEmail] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const validateEmail = (email: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const addToEmail = () => {
+    if (newToEmail.trim() && validateEmail(newToEmail)) {
+      setToEmails([...toEmails, newToEmail.trim()]);
+      setNewToEmail('');
+    } else if (newToEmail.trim()) {
+      toast.error('Please enter a valid email address');
+    }
+  };
+
+  const addCcEmail = () => {
+    if (newCcEmail.trim() && validateEmail(newCcEmail)) {
+      setCcEmails([...ccEmails, newCcEmail.trim()]);
+      setNewCcEmail('');
+    } else if (newCcEmail.trim()) {
+      toast.error('Please enter a valid email address');
+    }
+  };
+
+  const removeToEmail = (index: number) => {
+    setToEmails(toEmails.filter((_, i) => i !== index));
+  };
+
+  const removeCcEmail = (index: number) => {
+    setCcEmails(ccEmails.filter((_, i) => i !== index));
+  };
+
+  const generateHTMLReport = async (): Promise<string> => {
+    if (results.length === 0) return '';
+
+    let chartImage = '';
+    if (chartElementId) {
+      const chartElement = document.getElementById(chartElementId);
+      if (chartElement) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const canvas = await html2canvas(chartElement);
+        chartImage = canvas.toDataURL('image/png');
+      }
+    }
+
+    const headers = Object.keys(results[0]);
+    let htmlString = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+         <meta charset="UTF-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <title>Table Data Report</title>
+         <style>
+           body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+           .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); border-radius: 12px; }
+           h1 { text-align: center; color: #4f46e5; }
+           p { text-align: center; color: #6b7280; }
+           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+           th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size: 12px; }
+           th { background-color: #4f46e5; color: white; }
+           tr:nth-child(even) { background-color: #f3f4f6; }
+           .chart-container { margin-top: 20px; text-align: center; }
+           .chart-container img { max-width: 100%; height: auto; }
+           .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af; }
+           .logo { text-align: center; margin-bottom: 20px; }
+           .logo span { font-size: 24px; font-weight: bold; }
+           .logo .colored { color: #4f46e5; }
+         </style>
+      </head>
+      <body>
+         <div class="container">
+           <div class="logo">
+             <span class="colored">AI</span><span>Query</span>
+           </div>
+           <h1>Table Data Report</h1>
+           <p>Generated on: ${new Date().toLocaleString()}</p>
+           <p>Table: "${tableName || 'Database Table'}"</p>
+           <table>
+             <thead>
+               <tr>`;
+    headers.forEach((header) => {
+      htmlString += `<th>${header}</th>`;
+    });
+    htmlString += `</tr>
+             </thead>
+             <tbody>`;
+    results.forEach((row) => {
+      htmlString += `<tr>`;
+      headers.forEach((header) => {
+        htmlString += `<td>${row[header] !== null ? row[header] : '-'}</td>`;
+      });
+      htmlString += `</tr>`;
+    });
+    htmlString += `
+             </tbody>
+           </table>`;
+
+    if (chartImage) {
+      htmlString += `
+           <div class="chart-container">
+             <h2>Table Visualization</h2>
+             <img src="${chartImage}" alt="Table Data Visualization" />
+           </div>`;
+    }
+
+    htmlString += `
+           <div class="footer">
+             <p>Generated by MyQuery - Transform natural language into powerful SQL queries</p>
+           </div>
+         </div>
+      </body>
+      </html>
+    `;
+    return htmlString;
+  };
+
+  const generateEmailContent = async (): Promise<string> => {
+    try {
+      const response = await fetch('/api/table-view/generate-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableName }),
+      });
+      if (!response.ok) throw new Error('Failed to generate email content');
+      const data = await response.json();
+      return (
+        data.emailDescription ||
+        'Please find attached the detailed table data report.'
+      );
+    } catch (e) {
+      console.error(e);
+      throw new Error('Failed to generate email content');
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (toEmails.length === 0) {
+      toast.error('Please add at least one recipient');
+      return;
+    }
+
+    setSending(true);
+    try {
+      const emailContent = await generateEmailContent();
+      const finalEmailContent =
+        emailContent ||
+        'Dear Valued Customer,\n\nPlease find attached the detailed report of the table data.\n\nBest regards,\nMyQuery Team';
+      const htmlReport = await generateHTMLReport();
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toEmails,
+          cc: ccEmails,
+          subject: `Table Data Report: ${tableName || 'Database Table'}`,
+          body: finalEmailContent,
+          htmlAttachment: htmlReport,
+        }),
+      });
+      if (!res.ok) throw new Error('Email sending failed');
+      toast.success('Email sent successfully!');
+      onClose();
+      setToEmails([]);
+      setCcEmails([]);
+    } catch (error) {
+      toast.error('Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">
+            Email Table Data
+          </DialogTitle>
+        </DialogHeader>
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="to-email">To:</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="to-email"
+                placeholder="Enter email address"
+                value={newToEmail}
+                onChange={(e) => setNewToEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addToEmail();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={addToEmail}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {toEmails.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {toEmails.map((email, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
+                  >
+                    <span>{email}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeToEmail(index)}
+                      className="ml-1 text-secondary-foreground/70 hover:text-secondary-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cc-email">Cc:</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="cc-email"
+                placeholder="Enter email address"
+                value={newCcEmail}
+                onChange={(e) => setNewCcEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCcEmail();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={addCcEmail}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {ccEmails.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {ccEmails.map((email, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
+                  >
+                    <span>{email}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeCcEmail(index)}
+                      className="ml-1 text-secondary-foreground/70 hover:text-secondary-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 flex justify-between">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={sending || toEmails.length === 0}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Email
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default TableEmailModal;

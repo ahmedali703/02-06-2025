@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250" width="500" height="250">
+  <!-- Q as Search Icon -->
+  <g>
+    <!-- Main circle of Q/magnifying glass -->
+    <circle cx="100" cy="100" r="50" fill="#334095" stroke="#334095" stroke-width="10" />
+    <circle cx="100" cy="100" r="35" fill="none" stroke="white" stroke-width="10" />
+    
+    <!-- Handle of magnifying glass / tail of Q -->
+    <rect x="135" y="135" width="40" height="15" rx="5" fill="#334095" transform="rotate(-45 135 135)" />
+  </g>
+  
+  <!-- UERY Text -->
+  <g>
+    <path d="M170 70 L170 150 L195 150 C215 150 230 135 230 110 C230 85 215 70 195 70 L170 70 Z" fill="#334095" />
+    <path d="M190 90 L195 90 C205 90 210 95 210 110 C210 125 205 130 195 130 L190 130 L190 90 Z" fill="white" />
+    
+    <path d="M240 70 L240 150 L300 150 L300 130 L260 130 L260 120 L290 120 L290 100 L260 100 L260 90 L300 90 L300 70 L240 70 Z" fill="#334095" />
+    
+    <path d="M310 70 L310 150 L330 150 L330 115 L350 150 L375 150 L350 110 L375 70 L350 70 L330 105 L330 70 L310 70 Z" fill="#334095" />
+    
+    <path d="M385 70 L385 130 Q385 150 405 150 L440 150 L440 130 L410 130 Q405 130 405 125 L405 70 L385 70 Z" fill="#334095" />
+  </g>
+  
+  <!-- MYQUERY.AI tagline -->
+  <text x="250" y="180" font-family="Arial, sans-serif" font-size="20" font-weight="500" text-anchor="middle" fill="#334095">MYQUERY.AI</text>
+</svg>

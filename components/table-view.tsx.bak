@@ -1,0 +1,347 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SchemaColumn } from '@/components/database-selector';
+import { 
+  Loader2, 
+  Search, 
+  Filter, 
+  X, 
+  FileDown, 
+  FileText, 
+  FileCode, 
+  Mail, 
+  MoreHorizontal 
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import EmailModal from '@/components/EmailModal';
+
+interface TableViewProps {
+  tableId: number;
+  tableName: string;
+  columns: SchemaColumn[];
+  orgId?: number;
+  userId?: number;
+}
+
+export function TableView({ tableId, tableName, columns, orgId: propOrgId, userId: propUserId }: TableViewProps) {
+  // Format column title for display
+  const formatColumnTitle = (title: string) => {
+    return title
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Export functions
+  const exportCSV = (data: any[]) => {
+    if (data.length === 0) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    for (const row of data) {
+      const values = headers.map((header) => {
+        const escaped = ('' + row[header]).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${tableName}_data.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const exportPDF = async (data: any[]) => {
+    if (data.length === 0) return;
+
+    try {
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const headers = Object.keys(data[0]);
+      const orientation = headers.length > 8 ? 'landscape' : 'portrait';
+      const doc = new jsPDF(orientation, 'pt');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text(`${tableName} - Data Report`, 40, 40);
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      const dateStr = new Date().toLocaleString();
+      doc.text(`Generated on: ${dateStr}`, 40, 60);
+
+      const tableHeaders = [headers];
+      // Convertir los datos a un formato compatible con jspdf-autotable
+      const tableData = data.map((item) => 
+        Object.values(item).map(val => 
+          val === null ? '' : String(val)
+        )
+      ) as string[][];
+
+      const numColumns = headers.length;
+      const columnStyles: { [key: number]: { cellWidth: number | 'wrap' } } = {};
+      for (let i = 0; i < numColumns; i++) {
+        columnStyles[i] = { cellWidth: 'wrap' };
+      }
+
+      const fontSize = numColumns > 8 ? 8 : 10;
+
+      autoTable(doc, {
+        startY: 80,
+        head: tableHeaders,
+        body: tableData,
+        tableWidth: 'auto',
+        columnStyles: columnStyles,
+        styles: { fontSize: fontSize, cellPadding: 4, overflow: 'linebreak' },
+        headStyles: { fillColor: [63, 81, 181], textColor: 255 },
+        margin: { top: 80, left: 40, right: 40 },
+      });
+
+      doc.save(`${tableName}_data.pdf`);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF. Please try again.');
+    }
+  };
+
+  const exportHTML = (data: any[]) => {
+    if (data.length === 0) return;
+    const headers = Object.keys(data[0]);
+    let htmlString = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+         <meta charset="UTF-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <title>${tableName} - Data Report</title>
+         <style>
+           body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+           .container { max-width: 1500px; margin: 0 auto; background: white; padding: 20px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
+           h1 { text-align: center; color: #2c3e50; }
+           p { text-align: center; color: #7f8c8d; }
+           .table-container { overflow-x: auto; }
+           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+           th, td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; font-size: ${
+             headers.length > 10 ? '10px' : '12px'
+           }; }
+           th { background-color: #3f51b5; color: white; }
+           tr:nth-child(even) { background-color: #ecf0f1; }
+         </style>
+      </head>
+      <body>
+         <div class="container">
+           <h1>${tableName} - Data Report</h1>
+           <p>Generated on: ${new Date().toLocaleString()}</p>
+           <div class="table-container">
+             <table>
+               <thead>
+                 <tr>`;
+    headers.forEach((header) => {
+      htmlString += `<th>${formatColumnTitle(header)}</th>`;
+    });
+    htmlString += `</tr>
+               </thead>
+               <tbody>`;
+    data.forEach((row) => {
+      htmlString += `<tr>`;
+      headers.forEach((header) => {
+        htmlString += `<td>${row[header] !== null ? row[header] : '-'}</td>`;
+      });
+      htmlString += `</tr>`;
+    });
+    htmlString += `
+               </tbody>
+             </table>
+           </div>
+         </div>
+      </body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: 'text/html;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${tableName}_data.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  // Get userId from prop, localStorage, or context
+  const getUserId = () => {
+    if (typeof propUserId === 'number') return propUserId;
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('userId');
+      return stored ? parseInt(stored, 10) : undefined;
+    }
+    return undefined;
+  };
+  // Get orgId from prop or fallback (could add similar logic if needed)
+  const getOrgId = () => {
+    if (typeof propOrgId === 'number') return propOrgId;
+    return undefined;
+  };
+
+  const [activeTab, setActiveTab] = useState('columns');
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+
+  // Fetch table data when the Data tab is clicked
+  const fetchTableData = async () => {
+    // We'll always fetch data when this function is called, removing the previous check
+    // that prevented fetching if data was already loaded
+    
+    setLoading(true);
+    try {
+      // استخدام نفس طريقة تنفيذ الاستعلامات كما في صفحة activity
+      const sqlQuery = `SELECT * FROM ${tableName} WHERE ROWNUM <= 100`;
+      
+      // استخدام API /api/query/execute بدلاً من /api/table-data
+      const response = await fetch('/api/query/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sqlQuery: sqlQuery,
+          queryId: null // لا نحتاج queryId محدد لأننا ننشئ استعلام جديد
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch table data');
+      }
+      
+      const data = await response.json();
+      
+      if (data.rows && Array.isArray(data.rows)) {
+        setTableData(data.rows);
+        setFilteredData(data.rows); // Initialize filtered data with all data
+      } else {
+        console.error('Unexpected data format:', data);
+        throw new Error('Unexpected data format received');
+      }
+    } catch (error) {
+      console.error('Error fetching table data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Reset table data when tableId or tableName changes
+  useEffect(() => {
+    // Clear existing data when the table changes
+    setTableData([]);
+    setFilteredData([]);
+    setFilters({});
+    
+    // If the active tab is 'data', fetch the new table data
+    if (activeTab === 'data') {
+      fetchTableData();
+    }
+  }, [tableId, tableName]);
+
+  // Apply filters whenever the filters object changes
+  useEffect(() => {
+    if (tableData.length === 0) return;
+    
+    // Filter the data based on the current filters
+    const filtered = tableData.filter(row => {
+      // Check if the row matches all active filters
+      return Object.entries(filters).every(([key, filterValue]) => {
+        if (!filterValue) return true; // Skip empty filters
+        
+        const cellValue = row[key];
+        if (cellValue === null) return false;
+        
+        // Case-insensitive string comparison
+        return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
+      });
+    });
+    
+    setFilteredData(filtered);
+  }, [filters, tableData]);
+
+  return (
+    <div className="w-full">
+      <Tabs 
+        defaultValue="columns" 
+        className="w-full"
+        onValueChange={(value) => {
+          setActiveTab(value);
+                                        onClick={() => {
+                                          // Export just this row
+                                          exportCSV([row]);
+                                        }}
+                                        className="flex items-center gap-2 text-gray-700 hover:bg-gray-100 cursor-pointer px-3 py-2"
+                                      >
+                                        <FileText className="h-4 w-4 text-indigo-600" />
+                                        <span>Export Row as CSV</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          // Email just this row
+                                          setFilteredData([row]);
+                                          setIsEmailModalOpen(true);
+                                        }}
+                                        className="flex items-center gap-2 text-gray-700 hover:bg-gray-100 cursor-pointer px-3 py-2"
+                                      >
+                                        <Mail className="h-4 w-4 text-gray-700 dark:text-gray-400" />
+                                        <span>Share Row</span>
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={Object.keys(tableData[0]).length + 1} className="text-center py-4">
+                            No matching records found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+      {/* Email Modal */}
+      <EmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        results={filteredData}
+        question={`Data from table: ${tableName}`}
+        selectedModel="table-view"
+        chartElementId="table-data-container"
+      />
+    </div>
+  );
+}

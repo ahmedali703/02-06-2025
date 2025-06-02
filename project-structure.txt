@@ -1,0 +1,187 @@
+.
+├── app
+│   ├── aiquery
+│   │   ├── actions.ts
+│   │   ├── openai.ts
+│   │   ├── page.tsx
+│   │   └── reasoner.ts
+│   ├── api
+│   │   ├── aiquery
+│   │   ├── auth
+│   │   ├── connect-database
+│   │   ├── connect-oracle
+│   │   ├── dashboard
+│   │   ├── database
+│   │   ├── generate-email-description
+│   │   ├── generate-suggestions
+│   │   ├── get-db-types
+│   │   ├── logout
+│   │   ├── organization
+│   │   ├── proxy
+│   │   ├── query
+│   │   ├── save-onboarding
+│   │   ├── schema-summary
+│   │   ├── send-email
+│   │   ├── update-env
+│   │   ├── update-schema
+│   │   └── user
+│   ├── chat
+│   │   └── page.tsx
+│   ├── dashboard
+│   │   ├── activity
+│   │   ├── ai-settings
+│   │   ├── billing
+│   │   ├── database
+│   │   ├── error.tsx
+│   │   ├── layout.tsx
+│   │   ├── loading.tsx
+│   │   ├── members
+│   │   ├── organization
+│   │   ├── page.tsx
+│   │   ├── plans
+│   │   └── profile
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── login
+│   │   ├── LoginFormContent.tsx
+│   │   └── page.tsx
+│   ├── middleware.ts
+│   ├── onboarding
+│   │   └── page.tsx
+│   ├── page.tsx
+│   ├── providers.tsx
+│   ├── register
+│   │   └── page.tsx
+│   ├── settings
+│   │   └── page.tsx
+│   ├── verification-sent
+│   │   └── page.tsx
+│   └── verify
+│       └── page.tsx
+├── Build
+├── components
+│   ├── ActivityInsights.tsx
+│   ├── ai-spinner.tsx
+│   ├── AuthPage.tsx
+│   ├── dynamic-chart.tsx
+│   ├── EmailModal.tsx
+│   ├── export-menu.tsx
+│   ├── header.tsx
+│   ├── icons.tsx
+│   ├── inline-results-view.tsx
+│   ├── MembersPage.tsx
+│   ├── project-info.tsx
+│   ├── query-viewer.tsx
+│   ├── RecentActivityPanel.tsx
+│   ├── results.tsx
+│   ├── SearchContext.tsx
+│   ├── search.tsx
+│   ├── sidebar.tsx
+│   ├── SideMenu.tsx
+│   ├── single-value-indicator.tsx
+│   ├── skeleton-card.tsx
+│   ├── suggested-queries.tsx
+│   ├── theme-colors.tsx
+│   ├── TypewriterText.tsx
+│   └── ui
+│       ├── accordion.tsx
+│       ├── alert-dialog.tsx
+│       ├── alert.tsx
+│       ├── aspect-ratio.tsx
+│       ├── avatar.tsx
+│       ├── badge.tsx
+│       ├── breadcrumb.tsx
+│       ├── button.tsx
+│       ├── calendar.tsx
+│       ├── card.tsx
+│       ├── carousel.tsx
+│       ├── chart.tsx
+│       ├── checkbox.tsx
+│       ├── collapsible.tsx
+│       ├── command.tsx
+│       ├── context-menu.tsx
+│       ├── dialog.tsx
+│       ├── drawer.tsx
+│       ├── dropdown-menu.tsx
+│       ├── form.tsx
+│       ├── hover-card.tsx
+│       ├── input-otp.tsx
+│       ├── input.tsx
+│       ├── label.tsx
+│       ├── menubar.tsx
+│       ├── navigation-menu.tsx
+│       ├── pagination.tsx
+│       ├── popover.tsx
+│       ├── progress.tsx
+│       ├── query-with-tooltips.tsx
+│       ├── radio-group.tsx
+│       ├── resizable.tsx
+│       ├── scroll-area.tsx
+│       ├── select.tsx
+│       ├── separator.tsx
+│       ├── sheet.tsx
+│       ├── skeleton.tsx
+│       ├── slider.tsx
+│       ├── sonner.tsx
+│       ├── switch.tsx
+│       ├── table.tsx
+│       ├── tabs.tsx
+│       ├── textarea.tsx
+│       ├── toaster.tsx
+│       ├── toast.tsx
+│       ├── toggle-group.tsx
+│       ├── toggle.tsx
+│       └── tooltip.tsx
+├── context
+│   ├── QueryContext.tsx
+│   └── UserContext.tsx
+├── hooks
+│   ├── use-click-away.ts
+│   └── use-toast.tsx
+├── lib
+│   ├── auth.ts
+│   ├── db.ts
+│   ├── email.ts
+│   ├── env.ts
+│   ├── optimizer.ts
+│   ├── orgDb.ts
+│   ├── query-tracker.ts
+│   ├── rechart-format.ts
+│   ├── schema.ts
+│   ├── seed.ts
+│   ├── types.ts
+│   ├── user-utils.ts
+│   └── utils.ts
+├── middleware.ts
+├── next
+├── next.config.js
+├── next-env.d.ts
+├── nextjs@0.1.0
+├── oracledb.d.ts
+├── package.json
+├── package-lock.json
+├── pnpm-lock.yaml
+├── postcss.config.js
+├── project-structure.txt
+├── public
+│   ├── animations
+│   │   ├── ai-transform.json
+│   │   ├── hieroglyphs.json
+│   │   ├── pyramid.json
+│   │   ├── sphinx.json
+│   │   └── temple.json
+│   ├── images
+│   │   ├── mysql-logo.svg
+│   │   ├── oracle-logo.svg
+│   │   ├── postgresql-logo.svg
+│   │   └── sqlserver-logo.svg
+│   ├── next.svg
+│   └── vercel.svg
+├── README.md
+├── tailwind.config.ts
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+└── upload.sh
+
+47 directories, 139 files
